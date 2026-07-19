@@ -10,8 +10,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: false  # Bypasses the broken libass-android submodule entry
-          fetch-depth: 1
+          submodules: false   # Bypasses the broken submodule paths
+          fetch-depth: 0      # Pulls all tags and history so the git-versioning plugin works
 
       - name: Set up JDK
         uses: actions/setup-java@v4
