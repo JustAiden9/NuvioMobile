@@ -1,0 +1,46 @@
+name: Build Unsigned iOS IPA
+
+on:
+  workflow_dispatch: # Allows you to trigger it manually from the UI
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build KMP Framework
+        run: ./gradlew :composeApp:compileKotlinIosSimulatorArm64
+
+      - name: Build Xcode Project (Unsigned)
+        run: |
+          cd iosApp
+          xcodebuild -workspace iosApp.xcworkspace \
+                     -scheme iosApp \
+                     -configuration Release \
+                     -sdk iphoneos \
+                     CODE_SIGNING_ALLOWED=NO \
+                     CODE_SIGNING_REQUIRED=NO \
+                     clean build
+
+      - name: Package IPA
+        run: |
+          mkdir -p Payload
+          cp -r iosApp/build/Build/Products/Release-iphoneos/iosApp.app Payload/
+          zip -r NuvioMobile-unsigned.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NuvioMobile-unsigned-ipa
+          path: NuvioMobile-unsigned.ipa
