@@ -22,19 +22,17 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      # Creates the missing configuration file required by GenerateRuntimeConfigsTask
       - name: Create Dummy Local Properties
         run: touch local.properties
 
-      # Compiles the Kotlin Multiplatform shared components
       - name: Build KMP Framework
         run: ./gradlew :composeApp:compileKotlinIosSimulatorArm64
 
-      # Compiles the iOS binary without standard App Store/Provisioning signatures
+      # Switched from -workspace to -project to match the repository structure
       - name: Build Xcode Project (Unsigned)
         run: |
           cd iosApp
-          xcodebuild -workspace iosApp.xcworkspace \
+          xcodebuild -project iosApp.xcodeproj \
                      -scheme iosApp \
                      -configuration Release \
                      -sdk iphoneos \
@@ -42,7 +40,6 @@ jobs:
                      CODE_SIGNING_REQUIRED=NO \
                      clean build
 
-      # Bundles the native application wrapper inside the standard IPA folder payload structure
       - name: Package IPA
         run: |
           mkdir -p Payload
