@@ -10,10 +10,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: false   # Avoids the broken top-level submodule loops
+          submodules: false
           fetch-depth: 0
 
-      # Surgically pull the specific submodule required for the Xcode package graph
       - name: Initialize MPVKit Submodule
         run: |
           git submodule update --init MPVKit
@@ -30,10 +29,14 @@ jobs:
       - name: Create Dummy Local Properties
         run: touch local.properties
 
+      # Compiles the framework for physical devices (ARM64) to match the IPA target
       - name: Build KMP Framework
-        run: ./gradlew :composeApp:compileKotlinIosSimulatorArm64
+        run: ./gradlew :composeApp:compileKotlinIosArm64
 
+      # Explicitly passes JAVA_HOME and the system PATH to the Xcode build process
       - name: Build Xcode Project (Unsigned)
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
         run: |
           cd iosApp
           xcodebuild -project iosApp.xcodeproj \
@@ -42,6 +45,7 @@ jobs:
                      -sdk iphoneos \
                      CODE_SIGNING_ALLOWED=NO \
                      CODE_SIGNING_REQUIRED=NO \
+                     JAVA_HOME="$JAVA_HOME" \
                      clean build
 
       - name: Package IPA
