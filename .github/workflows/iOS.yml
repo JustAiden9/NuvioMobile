@@ -10,8 +10,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: false
+          submodules: false   # Avoids the broken top-level submodule loops
           fetch-depth: 0
+
+      # Surgically pull the specific submodule required for the Xcode package graph
+      - name: Initialize MPVKit Submodule
+        run: |
+          git submodule update --init MPVKit
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -28,7 +33,6 @@ jobs:
       - name: Build KMP Framework
         run: ./gradlew :composeApp:compileKotlinIosSimulatorArm64
 
-      # Switched from -workspace to -project to match the repository structure
       - name: Build Xcode Project (Unsigned)
         run: |
           cd iosApp
